@@ -20,7 +20,7 @@ type Context struct {
 	body    url.Values
 	decoder *schema.Decoder
 
-	Authentication *AuthTokenPayload
+	Authenticator
 }
 
 func NewContext(w http.ResponseWriter, r *http.Request, engine *Engine, cp *ContextParams) *Context {
@@ -40,7 +40,7 @@ func NewContext(w http.ResponseWriter, r *http.Request, engine *Engine, cp *Cont
 func (ctx *Context) parsePostForm() {
 	if err := ctx.Request.ParseMultipartForm(ctx.Engine.MaxPostFormSizeMB); err != nil {
 		if err != http.ErrNotMultipart {
-			logger.PrintDebug("Error parsing post form: %v", err)
+			logger.PrintError("Error parsing post form: %v", err)
 		}
 	}
 	ctx.body = ctx.Request.PostForm

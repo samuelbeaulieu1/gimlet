@@ -37,12 +37,12 @@ func ParseModelUintID(id string) (uint, error) {
 
 func ParseRouteUintIdentifier(key string, ctx *Context) (uint, bool) {
 	if ctx.GetParam(key) == "" {
-		ctx.WriteJSONError(http.StatusBadRequest, responses.NewError("L'identifiant est obligatoire"))
+		ctx.WriteJSONError(http.StatusBadRequest, responses.ERR_EMPTY_ID.Error())
 		return 0, false
 	}
 	id, err := ParseModelUintID(ctx.GetParam(key))
 	if err != nil {
-		ctx.WriteJSONError(http.StatusBadRequest, responses.NewError("L'identifiant est invalide"))
+		ctx.WriteJSONError(http.StatusBadRequest, responses.ERR_INVALID_ID.Error())
 		return 0, false
 	}
 
@@ -51,7 +51,7 @@ func ParseRouteUintIdentifier(key string, ctx *Context) (uint, bool) {
 
 func ParseRouteStrIdentifier(key string, ctx *Context) (string, bool) {
 	if ctx.GetParam(key) == "" {
-		ctx.WriteJSONError(http.StatusBadRequest, responses.NewError("L'identifiant est obligatoire"))
+		ctx.WriteJSONError(http.StatusBadRequest, responses.ERR_EMPTY_ID.Error())
 		return "", false
 	}
 
@@ -99,7 +99,7 @@ func (controller *Controller[M]) Update(ctx *Context) {
 		ctx.WriteJSONError(http.StatusBadRequest, err)
 	} else {
 		ctx.WriteJSONResponse(&responses.RequestResponseMessage{
-			Message: "Le record a été modifié avec succès",
+			Message: responses.SUCC_UPDATE_RECORD.String(),
 		})
 	}
 }
@@ -115,7 +115,7 @@ func (controller *Controller[M]) Delete(ctx *Context) {
 		ctx.WriteJSONError(http.StatusBadRequest, err)
 	} else {
 		ctx.WriteJSONResponse(&responses.RequestResponseMessage{
-			Message: "Le record a été supprimé avec succès",
+			Message: responses.SUCC_DELETE_RECORD.String(),
 		})
 	}
 }

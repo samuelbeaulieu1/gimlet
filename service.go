@@ -12,27 +12,27 @@ type ServiceHandler[M Model] interface {
 }
 
 type OnUpdate[M Model] interface {
-	BeforeUpdate(string, *M)
+	BeforeUpdate(string, *M) responses.Error
 }
 
 type AfterUpdate[M Model] interface {
-	AfterUpdate(*M)
+	AfterUpdate(*M) responses.Error
 }
 
 type OnCreate[M Model] interface {
-	BeforeCreate(*M)
+	BeforeCreate(*M) responses.Error
 }
 
 type AfterCreate[M Model] interface {
-	AfterCreate(*M)
+	AfterCreate(*M) responses.Error
 }
 
 type OnDelete interface {
-	BeforeDelete(string)
+	BeforeDelete(string) responses.Error
 }
 
 type AfterDelete interface {
-	AfterDelete(string)
+	AfterDelete(string) responses.Error
 }
 
 type ServiceInterface[M Model] interface {
@@ -52,7 +52,7 @@ type Service[M Model] struct {
 
 func (service *Service[M]) Exists(id string) responses.Error {
 	if !service.GetEntity().Exists(id) {
-		return responses.NewError("Record inexistant")
+		return responses.ERR_RECORD_NOT_FOUND.Error()
 	}
 
 	return nil
@@ -61,7 +61,7 @@ func (service *Service[M]) Exists(id string) responses.Error {
 func (service *Service[M]) GetAll() (*[]M, responses.Error) {
 	records, err := service.GetEntity().GetAll()
 	if err != nil {
-		return nil, responses.NewError("Impossible de récupérer la liste")
+		return nil, responses.ERR_GET_RECORDS.Error()
 	}
 
 	return records, nil
@@ -74,7 +74,7 @@ func (service *Service[M]) Get(id string) (*M, responses.Error) {
 
 	record, err := service.GetEntity().Get(id)
 	if err != nil {
-		return nil, responses.NewError("Impossible de récupérer le record")
+		return nil, responses.ERR_GET_RECORD.Error()
 	}
 
 	return record, nil
@@ -89,17 +89,20 @@ func (service *Service[M]) Update(id string, request *M) responses.Error {
 	}
 
 	if onUpdateHandler, ok := service.ServiceHandler.(OnUpdate[M]); ok {
-		onUpdateHandler.BeforeUpdate(id, request)
+		if err := onUpdateHandler.BeforeUpdate(id, request); err != nil {
+			return err
+		}
 	}
 	err := service.GetEntity().Update(id, request)
 	if err != nil {
-		return responses.NewError("Impossible de modifier le record")
-	}
-	if afterUpdateHandler, ok := service.ServiceHandler.(AfterUpdate[M]); ok {
-		afterUpdateHandler.AfterUpdate(request)
+		err = responses.ERR_UPDATE_RECORD.Error()
+	} else {
+		if afterUpdateHandler, ok := service.ServiceHandler.(AfterUpdate[M]); ok {
+			err = afterUpdateHandler.AfterUpdate(request)
+		}
 	}
 
-	return nil
+	return err
 }
 
 func (service *Service[M]) Create(request *M) (*M, responses.Error) {
@@ -108,17 +111,23 @@ func (service *Service[M]) Create(request *M) (*M, responses.Error) {
 	}
 
 	if onCreateHandler, ok := service.ServiceHandler.(OnCreate[M]); ok {
-		onCreateHandler.BeforeCreate(request)
+		if err := onCreateHandler.BeforeCreate(request); err != nil {
+			return nil, err
+		}
 	}
 	record, err := service.GetEntity().Create(request)
 	if err != nil {
-		return nil, responses.NewError("Impossible de créer le record")
-	}
-	if afterCreateHandler, ok := service.ServiceHandler.(AfterCreate[M]); ok {
-		afterCreateHandler.AfterCreate(record)
+		err = responses.ERR_CREATE_RECORD.Error()
+		record = nil
+	} else {
+		if afterCreateHandler, ok := service.ServiceHandler.(AfterCreate[M]); ok {
+			if err = afterCreateHandler.AfterCreate(record); err != nil {
+				record = nil
+			}
+		}
 	}
 
-	return record, nil
+	return record, err
 }
 
 func (service *Service[M]) Delete(id string) responses.Error {
@@ -127,16 +136,20 @@ func (service *Service[M]) Delete(id string) responses.Error {
 	}
 
 	if onDeleteHandler, ok := service.ServiceHandler.(OnDelete); ok {
-		onDeleteHandler.BeforeDelete(id)
+		if err := onDeleteHandler.BeforeDelete(id); err != nil {
+			return err
+		}
 	}
-	if err := service.GetEntity().Delete(id); err != nil {
-		return responses.NewError("Impossible de supprimer le record")
-	}
-	if afterDeleteHandler, ok := service.ServiceHandler.(AfterDelete); ok {
-		afterDeleteHandler.AfterDelete(id)
+	err := service.GetEntity().Delete(id)
+	if err != nil {
+		err = responses.ERR_DELETE_RECORD.Error()
+	} else {
+		if afterDeleteHandler, ok := service.ServiceHandler.(AfterDelete); ok {
+			err = afterDeleteHandler.AfterDelete(id)
+		}
 	}
 
-	return nil
+	return err
 }
 
 func (service *Service[M]) NewValidator() *validators.Validator {

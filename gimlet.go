@@ -7,6 +7,8 @@ import (
 	"github.com/samuelbeaulieu1/gimlet/logger"
 )
 
+type JSON map[string]any
+
 type Engine struct {
 	router
 
