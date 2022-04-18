@@ -30,8 +30,8 @@ var fr = []string{
 	"L'identifiant est obligatoire",
 	"L'identifiant est invalide",
 
-	"Le record a été modifié avec succès",
-	"Le record record a été supprimé avec succès",
+	"Le record a été modifié",
+	"Le record record a été supprimé",
 }
 
 var en = []string{
@@ -45,8 +45,8 @@ var en = []string{
 	"The identifier is missing",
 	"The identifier is invalid",
 
-	"The record has been succesfully updated",
-	"The record has been succesfully deleted",
+	"The record was updated",
+	"The record was deleted",
 }
 
 var messages = [][]string{
