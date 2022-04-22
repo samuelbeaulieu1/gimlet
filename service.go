@@ -48,18 +48,18 @@ type ServiceInterface[M Model] interface {
 
 type Service[M Model] struct {
 	ServiceHandler[M]
-	responseHandler responses.ResponseHandler
+	ResponseHandler responses.ResponseHandler
 }
 
 func NewService[M Model]() *Service[M] {
 	return &Service[M]{
-		responseHandler: &responses.ResponseMapper{},
+		ResponseHandler: &responses.ResponseMapper{},
 	}
 }
 
 func (service *Service[M]) Exists(id string) responses.Error {
 	if !service.GetEntity().Exists(id) {
-		return service.responseHandler.Error(responses.ERR_RECORD_NOT_FOUND)
+		return service.ResponseHandler.Error(responses.ERR_RECORD_NOT_FOUND)
 	}
 
 	return nil
@@ -68,7 +68,7 @@ func (service *Service[M]) Exists(id string) responses.Error {
 func (service *Service[M]) GetAll() (*[]M, responses.Error) {
 	records, err := service.GetEntity().GetAll()
 	if err != nil {
-		return nil, service.responseHandler.Error(responses.ERR_GET_RECORDS)
+		return nil, service.ResponseHandler.Error(responses.ERR_GET_RECORDS)
 	}
 
 	return records, nil
@@ -81,7 +81,7 @@ func (service *Service[M]) Get(id string) (*M, responses.Error) {
 
 	record, err := service.GetEntity().Get(id)
 	if err != nil {
-		return nil, service.responseHandler.Error(responses.ERR_GET_RECORD)
+		return nil, service.ResponseHandler.Error(responses.ERR_GET_RECORD)
 	}
 
 	return record, nil
@@ -102,7 +102,7 @@ func (service *Service[M]) Update(id string, request *M) responses.Error {
 	}
 	err := service.GetEntity().Update(id, request)
 	if err != nil {
-		err = service.responseHandler.Error(responses.ERR_UPDATE_RECORD)
+		err = service.ResponseHandler.Error(responses.ERR_UPDATE_RECORD)
 	} else {
 		if afterUpdateHandler, ok := service.ServiceHandler.(AfterUpdate[M]); ok {
 			err = afterUpdateHandler.AfterUpdate(request)
@@ -124,7 +124,7 @@ func (service *Service[M]) Create(request *M) (*M, responses.Error) {
 	}
 	record, err := service.GetEntity().Create(request)
 	if err != nil {
-		err = service.responseHandler.Error(responses.ERR_CREATE_RECORD)
+		err = service.ResponseHandler.Error(responses.ERR_CREATE_RECORD)
 		record = nil
 	} else {
 		if afterCreateHandler, ok := service.ServiceHandler.(AfterCreate[M]); ok {
@@ -149,7 +149,7 @@ func (service *Service[M]) Delete(id string) responses.Error {
 	}
 	err := service.GetEntity().Delete(id)
 	if err != nil {
-		err = service.responseHandler.Error(responses.ERR_DELETE_RECORD)
+		err = service.ResponseHandler.Error(responses.ERR_DELETE_RECORD)
 	} else {
 		if afterDeleteHandler, ok := service.ServiceHandler.(AfterDelete); ok {
 			err = afterDeleteHandler.AfterDelete(id)

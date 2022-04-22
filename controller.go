@@ -25,12 +25,12 @@ type ControllerInterface[M Model] interface {
 
 type Controller[M Model] struct {
 	ControllerHandler[M]
-	responseHandler responses.ResponseHandler
+	ResponseHandler responses.ResponseHandler
 }
 
 func NewController[M Model]() *Controller[M] {
 	return &Controller[M]{
-		responseHandler: &responses.ResponseMapper{},
+		ResponseHandler: &responses.ResponseMapper{},
 	}
 }
 
@@ -44,12 +44,12 @@ func ParseModelUintID(id string) (uint, error) {
 
 func (controller *Controller[M]) ParseRouteUintIdentifier(key string, ctx *Context) (uint, bool) {
 	if ctx.GetParam(key) == "" {
-		ctx.WriteJSONError(http.StatusBadRequest, controller.responseHandler.Error(responses.ERR_EMPTY_ID))
+		ctx.WriteJSONError(http.StatusBadRequest, controller.ResponseHandler.Error(responses.ERR_EMPTY_ID))
 		return 0, false
 	}
 	id, err := ParseModelUintID(ctx.GetParam(key))
 	if err != nil {
-		ctx.WriteJSONError(http.StatusBadRequest, controller.responseHandler.Error(responses.ERR_INVALID_ID))
+		ctx.WriteJSONError(http.StatusBadRequest, controller.ResponseHandler.Error(responses.ERR_INVALID_ID))
 		return 0, false
 	}
 
@@ -58,7 +58,7 @@ func (controller *Controller[M]) ParseRouteUintIdentifier(key string, ctx *Conte
 
 func (controller *Controller[M]) ParseRouteStrIdentifier(key string, ctx *Context) (string, bool) {
 	if ctx.GetParam(key) == "" {
-		ctx.WriteJSONError(http.StatusBadRequest, controller.responseHandler.Error(responses.ERR_EMPTY_ID))
+		ctx.WriteJSONError(http.StatusBadRequest, controller.ResponseHandler.Error(responses.ERR_EMPTY_ID))
 		return "", false
 	}
 
@@ -106,7 +106,7 @@ func (controller *Controller[M]) Update(ctx *Context) {
 		ctx.WriteJSONError(http.StatusBadRequest, err)
 	} else {
 		ctx.WriteJSONResponse(&responses.RequestResponseMessage{
-			Message: controller.responseHandler.String(responses.SUCC_UPDATE_RECORD),
+			Message: controller.ResponseHandler.String(responses.SUCC_UPDATE_RECORD),
 		})
 	}
 }
@@ -122,7 +122,7 @@ func (controller *Controller[M]) Delete(ctx *Context) {
 		ctx.WriteJSONError(http.StatusBadRequest, err)
 	} else {
 		ctx.WriteJSONResponse(&responses.RequestResponseMessage{
-			Message: controller.responseHandler.String(responses.SUCC_DELETE_RECORD),
+			Message: controller.ResponseHandler.String(responses.SUCC_DELETE_RECORD),
 		})
 	}
 }
