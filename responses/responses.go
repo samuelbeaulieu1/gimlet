@@ -3,6 +3,12 @@ package responses
 import "github.com/samuelbeaulieu1/gimlet/lang"
 
 type Response int
+type ResponseHandler interface {
+	String(Response) string
+	Error(Response) Error
+}
+
+type ResponseMapper struct{}
 
 const (
 	ERR_RECORD_NOT_FOUND Response = iota
@@ -60,4 +66,12 @@ func (response Response) String() string {
 
 func (response Response) Error() Error {
 	return NewError(response.String())
+}
+
+func (mapper *ResponseMapper) String(response Response) string {
+	return response.String()
+}
+
+func (mapper *ResponseMapper) Error(response Response) Error {
+	return response.Error()
 }

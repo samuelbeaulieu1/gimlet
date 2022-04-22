@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type GroupHandler func(r IRouter)
+type GroupHandler func(r Router)
 
 type router struct {
 	routes []*Route
@@ -16,7 +16,7 @@ type router struct {
 	groups      []*router
 }
 
-type IRouter interface {
+type Router interface {
 	GET(pattern string, handler Handler) *Route
 	POST(pattern string, handler Handler) *Route
 	DELETE(pattern string, handler Handler) *Route

@@ -10,7 +10,7 @@ import (
 const RouteIdentifier = "id"
 
 type ControllerHandler[M Model] interface {
-	RegisterRoutes(router IRouter)
+	RegisterRoutes(router Router)
 	GetService() ServiceInterface[M]
 }
 
@@ -25,6 +25,13 @@ type ControllerInterface[M Model] interface {
 
 type Controller[M Model] struct {
 	ControllerHandler[M]
+	responseHandler responses.ResponseHandler
+}
+
+func NewController[M Model]() *Controller[M] {
+	return &Controller[M]{
+		responseHandler: &responses.ResponseMapper{},
+	}
 }
 
 func ParseModelUintID(id string) (uint, error) {
@@ -35,23 +42,23 @@ func ParseModelUintID(id string) (uint, error) {
 	return uint(parsedId), nil
 }
 
-func ParseRouteUintIdentifier(key string, ctx *Context) (uint, bool) {
+func (controller *Controller[M]) ParseRouteUintIdentifier(key string, ctx *Context) (uint, bool) {
 	if ctx.GetParam(key) == "" {
-		ctx.WriteJSONError(http.StatusBadRequest, responses.ERR_EMPTY_ID.Error())
+		ctx.WriteJSONError(http.StatusBadRequest, controller.responseHandler.Error(responses.ERR_EMPTY_ID))
 		return 0, false
 	}
 	id, err := ParseModelUintID(ctx.GetParam(key))
 	if err != nil {
-		ctx.WriteJSONError(http.StatusBadRequest, responses.ERR_INVALID_ID.Error())
+		ctx.WriteJSONError(http.StatusBadRequest, controller.responseHandler.Error(responses.ERR_INVALID_ID))
 		return 0, false
 	}
 
 	return id, true
 }
 
-func ParseRouteStrIdentifier(key string, ctx *Context) (string, bool) {
+func (controller *Controller[M]) ParseRouteStrIdentifier(key string, ctx *Context) (string, bool) {
 	if ctx.GetParam(key) == "" {
-		ctx.WriteJSONError(http.StatusBadRequest, responses.ERR_EMPTY_ID.Error())
+		ctx.WriteJSONError(http.StatusBadRequest, controller.responseHandler.Error(responses.ERR_EMPTY_ID))
 		return "", false
 	}
 
@@ -73,7 +80,7 @@ func (controller *Controller[M]) GetAll(ctx *Context) {
 }
 
 func (controller *Controller[M]) Get(ctx *Context) {
-	id, ok := ParseRouteStrIdentifier(RouteIdentifier, ctx)
+	id, ok := controller.ParseRouteStrIdentifier(RouteIdentifier, ctx)
 	if !ok {
 		return
 	}
@@ -87,7 +94,7 @@ func (controller *Controller[M]) Get(ctx *Context) {
 }
 
 func (controller *Controller[M]) Update(ctx *Context) {
-	id, ok := ParseRouteStrIdentifier(RouteIdentifier, ctx)
+	id, ok := controller.ParseRouteStrIdentifier(RouteIdentifier, ctx)
 	if !ok {
 		return
 	}
@@ -99,13 +106,13 @@ func (controller *Controller[M]) Update(ctx *Context) {
 		ctx.WriteJSONError(http.StatusBadRequest, err)
 	} else {
 		ctx.WriteJSONResponse(&responses.RequestResponseMessage{
-			Message: responses.SUCC_UPDATE_RECORD.String(),
+			Message: controller.responseHandler.String(responses.SUCC_UPDATE_RECORD),
 		})
 	}
 }
 
 func (controller *Controller[M]) Delete(ctx *Context) {
-	id, ok := ParseRouteStrIdentifier(RouteIdentifier, ctx)
+	id, ok := controller.ParseRouteStrIdentifier(RouteIdentifier, ctx)
 	if !ok {
 		return
 	}
@@ -115,7 +122,7 @@ func (controller *Controller[M]) Delete(ctx *Context) {
 		ctx.WriteJSONError(http.StatusBadRequest, err)
 	} else {
 		ctx.WriteJSONResponse(&responses.RequestResponseMessage{
-			Message: responses.SUCC_DELETE_RECORD.String(),
+			Message: controller.responseHandler.String(responses.SUCC_DELETE_RECORD),
 		})
 	}
 }
