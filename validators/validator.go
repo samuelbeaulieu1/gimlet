@@ -78,7 +78,7 @@ func (validator *Validator) ValidateModel(action actions.Action, model any) resp
 }
 
 func (validator *Validator) handleValidator(action actions.Action, validatorTag string, value reflect.Value, field reflect.StructField) (bool, error) {
-	valid := false
+	valid := true
 	var err error
 
 	switch validatorTag {
@@ -92,7 +92,7 @@ func (validator *Validator) handleValidator(action actions.Action, validatorTag 
 		if validation, ok := validator.validators[validatorTag]; ok {
 			return validation(action, value, field)
 		}
-		logger.PrintError(fmt.Sprintf("Invalid validator %s for field %s", validatorTag, field.Name))
+		logger.PrintError(fmt.Sprintf("Unknown validator %s for field %s", validatorTag, field.Name))
 	}
 
 	return valid, err

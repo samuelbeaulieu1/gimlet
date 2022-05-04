@@ -8,7 +8,7 @@ import (
 
 type ServiceHandler[M Model] interface {
 	GetEntity() Entity[M]
-	RegisterValidators(*validators.Validator)
+	RegisterValidators(actions.Action, *M, *validators.Validator)
 }
 
 type OnUpdate[M Model] interface {
@@ -42,7 +42,7 @@ type ServiceInterface[M Model] interface {
 	Update(string, *M) responses.Error
 	Create(*M) (*M, responses.Error)
 	Delete(string) responses.Error
-	NewValidator() *validators.Validator
+	NewValidator(actions.Action, *M) *validators.Validator
 	ServiceHandler[M]
 }
 
@@ -88,7 +88,7 @@ func (service *Service[M]) Get(id string) (*M, responses.Error) {
 }
 
 func (service *Service[M]) Update(id string, request *M) responses.Error {
-	if err := service.NewValidator().ValidateModel(actions.UpdateAction, request); err != nil {
+	if err := service.NewValidator(actions.UpdateAction, request).ValidateModel(actions.UpdateAction, request); err != nil {
 		return err
 	}
 	if err := service.Exists(id); err != nil {
@@ -113,7 +113,7 @@ func (service *Service[M]) Update(id string, request *M) responses.Error {
 }
 
 func (service *Service[M]) Create(request *M) (*M, responses.Error) {
-	if err := service.NewValidator().ValidateModel(actions.CreateAction, request); err != nil {
+	if err := service.NewValidator(actions.CreateAction, request).ValidateModel(actions.CreateAction, request); err != nil {
 		return nil, err
 	}
 
@@ -159,9 +159,9 @@ func (service *Service[M]) Delete(id string) responses.Error {
 	return err
 }
 
-func (service *Service[M]) NewValidator() *validators.Validator {
+func (service *Service[M]) NewValidator(action actions.Action, request *M) *validators.Validator {
 	validator := validators.NewValidator()
-	service.RegisterValidators(validator)
+	service.RegisterValidators(action, request, validator)
 
 	return validator
 }
