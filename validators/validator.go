@@ -10,7 +10,7 @@ import (
 	"github.com/samuelbeaulieu1/gimlet/responses"
 )
 
-type Validation func(action actions.Action, value reflect.Value, field reflect.StructField) (bool, error)
+type Validation func(ctx *ValidationCtx) (bool, error)
 
 type Validator struct {
 	validators map[string]Validation
@@ -54,7 +54,12 @@ func (validator *Validator) ValidateModel(action actions.Action, model any) resp
 		tags := strings.Split(typeField.Tag.Get("validate"), ",")
 		valid := true
 		for _, tag := range tags {
-			isValid, validationErr := validator.handleValidator(action, tag, valueField, typeField)
+			isValid, validationErr := validator.handleValidator(tag, &ValidationCtx{
+				model,
+				action,
+				valueField,
+				typeField,
+			})
 			valid = valid && isValid
 			if validationErr != nil {
 				err = append(err, validationErr.Error())
@@ -77,22 +82,22 @@ func (validator *Validator) ValidateModel(action actions.Action, model any) resp
 	return nil
 }
 
-func (validator *Validator) handleValidator(action actions.Action, validatorTag string, value reflect.Value, field reflect.StructField) (bool, error) {
+func (validator *Validator) handleValidator(validatorTag string, ctx *ValidationCtx) (bool, error) {
 	valid := true
 	var err error
 
 	switch validatorTag {
 	case "required":
-		valid, err = validator.ValidateRequired(action, value, field)
+		valid, err = validator.ValidateRequired(ctx)
 	case "requiredOnUpdate":
-		valid, err = validator.ValidateRequiredOnUpdate(action, value, field)
+		valid, err = validator.ValidateRequiredOnUpdate(ctx)
 	case "requiredOnCreate":
-		valid, err = validator.ValidateRequiredOnCreate(action, value, field)
+		valid, err = validator.ValidateRequiredOnCreate(ctx)
 	default:
 		if validation, ok := validator.validators[validatorTag]; ok {
-			return validation(action, value, field)
+			return validation(ctx)
 		}
-		logger.PrintError(fmt.Sprintf("Unknown validator %s for field %s", validatorTag, field.Name))
+		logger.PrintError(fmt.Sprintf("Unknown validator %s for field %s", validatorTag, ctx.Field.Name))
 	}
 
 	return valid, err

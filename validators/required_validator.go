@@ -7,26 +7,26 @@ import (
 	"github.com/samuelbeaulieu1/gimlet/actions"
 )
 
-func (validator *Validator) ValidateRequired(action actions.Action, value reflect.Value, field reflect.StructField) (bool, error) {
-	val := value.Interface()
+func (validator *Validator) ValidateRequired(ctx *ValidationCtx) (bool, error) {
+	val := ctx.Value.Interface()
 	if reflect.DeepEqual(val, reflect.Zero(reflect.TypeOf(val)).Interface()) {
-		return false, errors.New("Le champ " + GetFieldLabel(field) + " est obligatoire")
+		return false, errors.New("Le champ " + GetFieldLabel(ctx.Field) + " est obligatoire")
 	}
 
 	return true, nil
 }
 
-func (validator *Validator) ValidateRequiredOnUpdate(action actions.Action, value reflect.Value, field reflect.StructField) (bool, error) {
-	if action == actions.UpdateAction {
-		return validator.ValidateRequired(action, value, field)
+func (validator *Validator) ValidateRequiredOnUpdate(ctx *ValidationCtx) (bool, error) {
+	if ctx.Action == actions.UpdateAction {
+		return validator.ValidateRequired(ctx)
 	}
 
 	return true, nil
 }
 
-func (validator *Validator) ValidateRequiredOnCreate(action actions.Action, value reflect.Value, field reflect.StructField) (bool, error) {
-	if action == actions.CreateAction {
-		return validator.ValidateRequired(action, value, field)
+func (validator *Validator) ValidateRequiredOnCreate(ctx *ValidationCtx) (bool, error) {
+	if ctx.Action == actions.CreateAction {
+		return validator.ValidateRequired(ctx)
 	}
 
 	return true, nil
