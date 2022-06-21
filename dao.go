@@ -1,8 +1,9 @@
 package gimlet
 
 import (
-	"math/rand"
-	"time"
+	"encoding/base64"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -17,19 +18,12 @@ type Dao interface {
 	ExistsByID(id string, model Model) bool
 }
 
-func CreateNewID(dao Dao, model Model, n int) string {
-	var charset = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_")
-	id := make([]byte, n)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	for {
-		for i := range id {
-			id[i] = charset[r.Intn(len(charset))]
-		}
-		if !dao.ExistsByID(string(id), model) {
-			return string(id)
-		} else {
-			id = make([]byte, n)
-		}
+func CreateNewID() (string, error) {
+	id := uuid.New()
+	uuidBytes, err := id.MarshalBinary()
+	if err != nil {
+		return "", err
 	}
+
+	return base64.RawURLEncoding.EncodeToString([]byte(uuidBytes)), nil
 }
