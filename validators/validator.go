@@ -12,13 +12,30 @@ import (
 
 type Validation func(ctx *ValidationCtx) (bool, error)
 
+var (
+	defaultValidators = map[string]Validation{
+		"required":         ValidateRequired,
+		"requiredOnUpdate": ValidateRequiredOnUpdate,
+		"requiredOnCreate": ValidateRequiredOnCreate,
+	}
+)
+
 type Validator struct {
 	validators map[string]Validation
 }
 
 func NewValidator() *Validator {
-	return &Validator{
+	validator := &Validator{
 		validators: make(map[string]Validation),
+	}
+	validator.initDefaultValidators()
+
+	return validator
+}
+
+func (validator *Validator) initDefaultValidators() {
+	for name, validation := range defaultValidators {
+		validator.validators[name] = validation
 	}
 }
 
@@ -86,19 +103,10 @@ func (validator *Validator) handleValidator(validatorTag string, ctx *Validation
 	valid := true
 	var err error
 
-	switch validatorTag {
-	case "required":
-		valid, err = validator.ValidateRequired(ctx)
-	case "requiredOnUpdate":
-		valid, err = validator.ValidateRequiredOnUpdate(ctx)
-	case "requiredOnCreate":
-		valid, err = validator.ValidateRequiredOnCreate(ctx)
-	default:
-		if validation, ok := validator.validators[validatorTag]; ok {
-			return validation(ctx)
-		}
-		logger.PrintError(fmt.Sprintf("Unknown validator %s for field %s", validatorTag, ctx.Field.Name))
+	if validation, ok := validator.validators[validatorTag]; ok {
+		return validation(ctx)
 	}
+	logger.PrintError(fmt.Sprintf("Unknown validator %s for field %s", validatorTag, ctx.Field.Name))
 
 	return valid, err
 }
